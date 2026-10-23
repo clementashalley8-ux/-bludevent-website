@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BluDevent | Black in December 2026</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#080808;
+  color:white;
+}
+header{
+  text-align:center;
+  padding:35px 15px;
+  background:linear-gradient(#000b,#000e),url('background.jpg') center/cover;
+  border-bottom:3px solid #d6aa38;
+}
+h1{color:#e6bd55;font-size:34px;margin:8px 0}
+h2{color:#e6bd55}
+section{
+  max-width:650px;
+  margin:22px auto;
+  padding:22px;
+  background:#171717;
+  border:1px solid #444;
+  border-radius:14px;
+}
+button{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border:0;
+  border-radius:8px;
+  background:#e6bd55;
+  color:#111;
+  font-size:16px;
+  font-weight:bold;
+}
+input,select{
+  width:100%;
+  padding:13px;
+  margin-top:8px;
+  border-radius:7px;
+  border:1px solid #777;
+  font-size:16px;
+}
+label{display:block;margin-top:14px}
+.info{line-height:1.8}
+.small{font-size:13px;color:#ccc}
+#reader{width:100%;margin-top:15px}
+#result{
+  padding:14px;
+  margin-top:14px;
+  border-radius:8px;
+  overflow-wrap:anywhere;
+  background:#292929;
+}
+footer{text-align:center;padding:20px;color:#aaa}
+</style>
+</head>
+<body>
+<header>
+  <h1>BluDevent</h1>
+  <h2>BLACK IN DECEMBER 2026</h2>
+  <p>One Night. One Experience. Unforgettable Memories.</p>
+</header>
+<section>
+  <h2>Event Information</h2>
+  <div class="info">
+    📅 <strong>Date:</strong> Saturday, 26 December 2026<br>
+    🕗 <strong>Time:</strong> 8:00 PM<br>
+    📍 <strong>Venue:</strong> Teshie Mobile, Accra, Ghana<br>
+    🎟️ <strong>Guys:</strong> GH₵30<br>
+    🎟️ <strong>Ladies:</strong> GH₵20
+  </div>
+</section>
+<section>
+  <h2>Book Your Ticket</h2>
+  <form id="bookingForm">
+    <label>Full name</label>
+    <input id="customerName" required placeholder="Enter your full name">
+<label>Ticket category</label>
+<select id="ticketType">
+  <option value="Guys - GH₵30">Guys - GH₵30</option>
+  <option value="Ladies - GH₵20">Ladies - GH₵20</option>
+</select>
+<label>Number of tickets</label>
+<input id="ticketQuantity" type="number" min="1" max="10" value="1" required>
+<button type="submit">Book via WhatsApp</button>
+  </form>
+  <p class="small">
+    Your booking request will open WhatsApp. A booking request is not
+    confirmation of payment or a verified ticket.
+  </p>
+</section>
+<section>
+  <h2>Ticket Verification</h2>
+  <p>Event staff: scan a ticket QR code or enter its ticket code below.</p>
+
+Ticket code
+Verify Ticket
+Scan QR Code
+Stop Scanner
+  <div id="reader"></div>
+  <div id="result" role="status">Ready to verify a ticket.</div>
+  <p class="small">
+    Ticket verification requires the secure Netlify backend and Firebase
+    service-account configuration. Only authorized event staff should
+    use this section.
+  </p>
+</section>
+<footer>
+  <p>BluDevent © 2026</p>
+  <p>WhatsApp: +233 20 260 3687</p>
+</footer>
+<script>
+const WHATSAPP_NUMBER = "233202603687";
+let scanner = null;
+let scanning = false;
+let checking = false;
+document.getElementById("bookingForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const name = document.getElementById("customerName").value.trim();
+  const type = document.getElementById("ticketType").value;
+  const quantity = Number(document.getElementById("ticketQuantity").value);
+  if (!name || !Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
+    alert("Please enter a valid name and ticket quantity.");
+    return;
+  }
+  const price = type.includes("Guys") ? 30 : 20;
+  const total = price * quantity;
+  const message =
+    "Hello BluDevent, I want to request a ticket booking.%0A" +
+    "Name: " + encodeURIComponent(name) + "%0A" +
+    "Ticket: " + encodeURIComponent(type) + "%0A" +
+    "Quantity: " + quantity + "%0A" +
+    "Total: GH₵" + total + "%0A" +
+    "Event: Black in December 2026";
+  window.open("https://wa.me/" + WHATSAPP_NUMBER + "?text=" + message, "_blank");
+});
+async function verifyTicket() {
+  if (checking) return;
+  const code = document.getElementById("ticketCode").value.trim();
+  const result = document.getElementById("result");
+  if (!code) {
+    result.textContent = "Please enter or scan a ticket code.";
+    return;
+  }
+  checking = true;
+  document.getElementById("verifyButton").disabled = true;
+  result.textContent = "Checking ticket...";
+  try {
+    const response = await fetch("/.netlify/functions/verify-ticket", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ticketCode: code})
+    });
+    const data = await response.json();
+    if (response.ok && data.valid === true) {
+      result.textContent = "✅ " + data.message;
+      result.style.background = "#14532d";
+    } else {
+      result.textContent = "❌ " + (data.message || "Ticket could not be verified.");
+      result.style.background = "#7f1d1d";
+    }
+  } catch (error) {
+    result.textContent =
+      "Unable to contact the verification service. Check the Netlify deployment and Firebase configuration.";
+    result.style.background = "#7f1d1d";
+  } finally {
+    checking = false;
+    document.getElementById("verifyButton").disabled = false;
+  }
+}
+async function startScanner() {
+  const result = document.getElementById("result");
+  if (scanning) return;
+  if (typeof Html5Qrcode === "undefined") {
+    result.textContent = "QR scanner library did not load. Check your internet connection.";
+    return;
+  }
+  try {
+    scanner = new Html5Qrcode("reader");
+    scanning = true;
+    document.getElementById("scanButton").style.display = "none";
+    document.getElementById("stopButton").style.display = "block";
+    result.textContent = "Opening camera...";
+    await scanner.start(
+      {facingMode: "environment"},
+      {fps: 10, qrbox: {width: 230, height: 230}},
+      async function(decodedText) {
+        document.getElementById("ticketCode").value = decodedText.trim();
+        await stopScanner();
+        await verifyTicket();
+      },
+      function() {}
+    );
+    result.textContent = "Camera ready. Point it at the ticket QR code.";
+  } catch (error) {
+    scanning = false;
+    scanner = null;
+    document.getElementById("scanButton").style.display = "block";
+    document.getElementById("stopButton").style.display = "none";
+    result.textContent =
+      "Camera could not start. Allow camera access and open the website using HTTPS.";
+  }
+}
+async function stopScanner() {
+  if (scanner && scanning) {
+    try {
+      await scanner.stop();
+      await scanner.clear();
+    } catch (error) {}
+  }
+  scanner = null;
+  scanning = false;
+  document.getElementById("scanButton").style.display = "block";
+  document.getElementById("stopButton").style.display = "none";
+}
+</script>
+</body>
+</html>
