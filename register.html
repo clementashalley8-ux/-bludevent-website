@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BluDevent Ticket Registration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #101010;
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 30px auto;
+      background: #202020;
+      padding: 22px;
+      border-radius: 12px;
+    }
+    h1 {
+      color: #25d366;
+      text-align: center;
+    }
+    input, textarea, button {
+      box-sizing: border-box;
+      width: 100%;
+      margin: 8px 0;
+      padding: 13px;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    input, textarea {
+      background: #fff;
+      color: #111;
+      border: 1px solid #888;
+    }
+    textarea {
+      height: 220px;
+    }
+    button {
+      background: #25d366;
+      color: #111;
+      font-weight: bold;
+      border: none;
+    }
+    #message {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      line-height: 1.5;
+    }
+    .note {
+      color: #ccc;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>BluDevent 🎟️</h1>
+    <h2>Ticket Registration</h2>
+    <p class="note">
+      Sign in with your authorized staff account to register tickets.
+    </p>
+    <div id="loginSection">
+      <input
+        id="email"
+        type="email"
+        placeholder="Staff email"
+        autocomplete="username"
+      >
+      <input
+        id="password"
+        type="password"
+        placeholder="Password"
+        autocomplete="current-password"
+      >
+      <button id="loginButton">Staff Login</button>
+    </div>
+    <div id="registrationSection" hidden>
+      <p id="staffStatus"></p>
+      <label for="codes">
+        Paste one ticket code per line (maximum 400):
+      </label>
+      <textarea
+        id="codes"
+        placeholder="BLU26-K7MPQX&#10;BLU26-R4T9WA"
+      ></textarea>
+      <button id="registerButton">Register Tickets</button>
+      <button id="logoutButton">Sign Out</button>
+    </div>
+    <p id="message" role="status"></p>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script>
+    /*
+      IMPORTANT:
+      Copy the existing firebaseConfig object from index.html
+      and replace the placeholder below. Do not copy any
+      service-account private key or server secret.
+    */
+    const firebaseConfig = {
+      REPLACE_WITH_YOUR_EXISTING_FIREBASE_CONFIG
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const loginSection = document.getElementById("loginSection");
+    const registrationSection =
+      document.getElementById("registrationSection");
+    const message = document.getElementById("message");
+    function showMessage(text) {
+      message.textContent = text;
+    }
+    auth.onAuthStateChanged(user => {
+      loginSection.hidden = !!user;
+      registrationSection.hidden = !user;
+      if (user) {
+        document.getElementById("staffStatus").textContent =
+          "Signed in as " + user.email;
+      }
+    });
+    document.getElementById("loginButton").onclick = async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      try {
+        showMessage("Signing in...");
+        await auth.signInWithEmailAndPassword(email, password);
+        showMessage(
+          "Signed in. Paste the ticket codes when you are ready."
+        );
+      } catch (error) {
+        showMessage("Login failed: " + error.message);
+      }
+    };
+    document.getElementById("registerButton").onclick = async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        showMessage("Please sign in first.");
+        return;
+      }
+      const codes = document.getElementById("codes").value
+        .split(/\r?\n/)
+        .map(code => code.trim().toUpperCase())
+        .filter(Boolean);
+      if (codes.length < 1 || codes.length > 400) {
+        showMessage("Enter between 1 and 400 ticket codes.");
+        return;
+      }
+      if (new Set(codes).size !== codes.length) {
+        showMessage("Duplicate codes found. Please correct the list.");
+        return;
+      }
+      if (!codes.every(code => /^BLU26-[A-Z0-9]{6}$/.test(code))) {
+        showMessage(
+          "Invalid code format. Each code must look like BLU26-K7MPQX."
+        );
+        return;
+      }
+      const confirmed = confirm(
+        "Register " + codes.length +
+        " tickets in Firebase? Existing tickets will not be overwritten."
+      );
+      if (!confirmed) return;
+      const button = document.getElementById("registerButton");
+      button.disabled = true;
+      try {
+        showMessage("Registering tickets. Please wait...");
+        const token = await user.getIdToken();
+        const response = await fetch(
+          "/.netlify/functions/register-tickets",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({ codes })
+          }
+        );
+        const result = await response.json();
+        if (!response.ok) {
+          showMessage(
+            "Registration failed: " +
+            (result.message || "Please try again.") +
+            (result.existingCodes
+              ? "\nExisting codes: " + result.existingCodes.join(", ")
+              : "")
+          );
+          return;
+        }
+        showMessage(
+          "SUCCESS! Registered " + result.registered +
+          " tickets in Firebase."
+        );
+        document.getElementById("codes").value = "";
+      } catch (error) {
+        showMessage(
+          "Could not complete registration. Check your connection and try again."
+        );
+      } finally {
+        button.disabled = false;
+      }
+    };
+    document.getElementById("logoutButton").onclick = async () => {
+      await auth.signOut();
+      showMessage("You have signed out.");
+    };
+  </script>
+</body>
+</html>
