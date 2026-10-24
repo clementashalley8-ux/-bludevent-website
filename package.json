@@ -1,5 +1,5 @@
 {
-“name”: “bludevent-tickests",
+  "name": "bludevent-tickets",
 “version”: “1.0.0”,
 “private”: true,
 “description”: “BluDevent ticket verification system”,
