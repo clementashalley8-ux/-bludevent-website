@@ -3,8 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BluDevent Ticket Registration</title>
+  <meta name="theme-color" content="#101010">
+  <title>BluDevent | Ticket Registration</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: Arial, sans-serif;
       background: #101010;
@@ -13,201 +17,332 @@
       padding: 20px;
     }
     .container {
-      max-width: 500px;
+      max-width: 520px;
       margin: 30px auto;
       background: #202020;
-      padding: 22px;
-      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid #444;
+      border-radius: 14px;
     }
     h1 {
-      color: #25d366;
+      color: #e6bd55;
       text-align: center;
     }
-    input, textarea, button {
-      box-sizing: border-box;
+    h2 {
+      color: #e6bd55;
+    }
+    input,
+    textarea,
+    button {
       width: 100%;
-      margin: 8px 0;
       padding: 13px;
-      border-radius: 6px;
+      margin: 8px 0;
+      border-radius: 7px;
       font-size: 16px;
     }
-    input, textarea {
-      background: #fff;
+    input,
+    textarea {
+      background: white;
       color: #111;
       border: 1px solid #888;
     }
     textarea {
-      height: 220px;
+      min-height: 240px;
+      resize: vertical;
+      font-family: monospace;
     }
     button {
-      background: #25d366;
+      background: #e6bd55;
       color: #111;
       font-weight: bold;
       border: none;
+      cursor: pointer;
     }
-    #message {
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      line-height: 1.5;
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
     .note {
       color: #ccc;
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.6;
+    }
+    #message {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      padding: 12px;
+      border-radius: 7px;
+      background: #292929;
+      line-height: 1.6;
+    }
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <main class="container">
     <h1>BluDevent 🎟️</h1>
     <h2>Ticket Registration</h2>
     <p class="note">
-      Sign in with your authorized staff account to register tickets.
+      Authorized event staff only.
+      Sign in to register tickets in Firebase.
     </p>
-    <div id="loginSection">
+    <!-- STAFF LOGIN -->
+    <section id="loginSection">
+      <label for="email">Staff email</label>
       <input
         id="email"
         type="email"
-        placeholder="Staff email"
         autocomplete="username"
+        placeholder="Enter your staff email"
+        required
       >
+      <label for="password">Password</label>
       <input
         id="password"
         type="password"
-        placeholder="Password"
         autocomplete="current-password"
+        placeholder="Enter your password"
+        required
       >
-      <button id="loginButton">Staff Login</button>
-    </div>
-    <div id="registrationSection" hidden>
-      <p id="staffStatus"></p>
+      <button id="loginButton" type="button">
+        Staff Login
+      </button>
+    </section>
+    <!-- TICKET REGISTRATION -->
+    <section id="registrationSection" class="hidden">
+      <p id="staffStatus" class="note"></p>
       <label for="codes">
-        Paste one ticket code per line (maximum 400):
+        Ticket codes — one code per line
       </label>
       <textarea
         id="codes"
         placeholder="BLU26-K7MPQX&#10;BLU26-R4T9WA"
+        spellcheck="false"
       ></textarea>
-      <button id="registerButton">Register Tickets</button>
-      <button id="logoutButton">Sign Out</button>
-    </div>
-    <p id="message" role="status"></p>
-  </div>
+      <p class="note">
+        You can submit up to 400 codes at once.
+        Each code must have six letters or numbers
+        after BLU26-.
+      </p>
+      <button id="registerButton" type="button">
+        Register Tickets
+      </button>
+      <button id="logoutButton" type="button">
+        Sign Out
+      </button>
+    </section>
+    <p id="message" role="status" aria-live="polite">
+      Please sign in with your authorized staff account.
+    </p>
+  </main>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script>
-    /*
-      IMPORTANT:
-      Copy the existing firebaseConfig object from index.html
-      and replace the placeholder below. Do not copy any
-      service-account private key or server secret.
-    */
+    "use strict";
+    // Firebase web configuration.
+    // Never put a service-account private key here.
     const firebaseConfig = {
-      REPLACE_WITH_YOUR_EXISTING_FIREBASE_CONFIG
+      apiKey: "AIzaSyCmPjjhOnzp7VXQD9tiH23Pw7ynLVTKx4Y",
+      authDomain: "blud-event-tickets.firebaseapp.com",
+      projectId: "blud-event-tickets",
+      storageBucket: "blud-event-tickets.firebasestorage.app",
+      messagingSenderId: "887215943140",
+      appId: "1:887215943140:web:7c8a5abe753cdd4dec2bf1"
     };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const auth = firebase.auth();
-    const loginSection = document.getElementById("loginSection");
+    const loginSection =
+      document.getElementById("loginSection");
     const registrationSection =
       document.getElementById("registrationSection");
-    const message = document.getElementById("message");
+    const emailInput =
+      document.getElementById("email");
+    const passwordInput =
+      document.getElementById("password");
+    const codesInput =
+      document.getElementById("codes");
+    const loginButton =
+      document.getElementById("loginButton");
+    const registerButton =
+      document.getElementById("registerButton");
+    const message =
+      document.getElementById("message");
     function showMessage(text) {
       message.textContent = text;
     }
-    auth.onAuthStateChanged(user => {
-      loginSection.hidden = !!user;
-      registrationSection.hidden = !user;
+    // Update the page when authentication changes.
+    auth.onAuthStateChanged(function(user) {
+      loginSection.classList.toggle("hidden", !!user);
+      registrationSection.classList.toggle(
+        "hidden",
+        !user
+      );
       if (user) {
         document.getElementById("staffStatus").textContent =
-          "Signed in as " + user.email;
+          "Signed in as " + (user.email || "staff") +
+          ". Email verification is required.";
+        showMessage(
+          "Signed in. You can prepare your ticket codes."
+        );
+      } else {
+        showMessage(
+          "Please sign in with your authorized staff account."
+        );
       }
     });
-    document.getElementById("loginButton").onclick = async () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+    // STAFF LOGIN
+    loginButton.addEventListener("click", async function() {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      if (!email || !password) {
+        showMessage("Enter your staff email and password.");
+        return;
+      }
+      loginButton.disabled = true;
+      showMessage("Signing in...");
       try {
-        showMessage("Signing in...");
-        await auth.signInWithEmailAndPassword(email, password);
+        await auth.signInWithEmailAndPassword(
+          email,
+          password
+        );
+        passwordInput.value = "";
         showMessage(
-          "Signed in. Paste the ticket codes when you are ready."
+          "Login successful. Preparing registration page..."
         );
       } catch (error) {
-        showMessage("Login failed: " + error.message);
-      }
-    };
-    document.getElementById("registerButton").onclick = async () => {
-      const user = auth.currentUser;
-      if (!user) {
-        showMessage("Please sign in first.");
-        return;
-      }
-      const codes = document.getElementById("codes").value
-        .split(/\r?\n/)
-        .map(code => code.trim().toUpperCase())
-        .filter(Boolean);
-      if (codes.length < 1 || codes.length > 400) {
-        showMessage("Enter between 1 and 400 ticket codes.");
-        return;
-      }
-      if (new Set(codes).size !== codes.length) {
-        showMessage("Duplicate codes found. Please correct the list.");
-        return;
-      }
-      if (!codes.every(code => /^BLU26-[A-Z0-9]{6}$/.test(code))) {
+        console.error("Staff login failed:", error.code);
         showMessage(
-          "Invalid code format. Each code must look like BLU26-K7MPQX."
+          "Login failed. Check your details and confirm " +
+          "Email/Password sign-in is enabled in Firebase."
         );
-        return;
+      } finally {
+        loginButton.disabled = false;
       }
-      const confirmed = confirm(
-        "Register " + codes.length +
-        " tickets in Firebase? Existing tickets will not be overwritten."
-      );
-      if (!confirmed) return;
-      const button = document.getElementById("registerButton");
-      button.disabled = true;
-      try {
-        showMessage("Registering tickets. Please wait...");
-        const token = await user.getIdToken();
-        const response = await fetch(
-          "/.netlify/functions/register-tickets",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": "Bearer " + token
-            },
-            body: JSON.stringify({ codes })
-          }
-        );
-        const result = await response.json();
-        if (!response.ok) {
+    });
+    // REGISTER TICKETS
+    registerButton.addEventListener(
+      "click",
+      async function() {
+        const user = auth.currentUser;
+        if (!user) {
+          showMessage("Please sign in first.");
+          return;
+        }
+        const codes = codesInput.value
+          .split(/\r?\n/)
+          .map(function(code) {
+            return code.trim().toUpperCase();
+          })
+          .filter(Boolean);
+        if (codes.length === 0 || codes.length > 400) {
           showMessage(
-            "Registration failed: " +
-            (result.message || "Please try again.") +
-            (result.existingCodes
-              ? "\nExisting codes: " + result.existingCodes.join(", ")
-              : "")
+            "Enter between 1 and 400 ticket codes."
           );
           return;
         }
-        showMessage(
-          "SUCCESS! Registered " + result.registered +
-          " tickets in Firebase."
+        // Validate every code.
+        const validFormat = codes.every(function(code) {
+          return /^BLU26-[A-Z0-9]{6}$/.test(code);
+        });
+        if (!validFormat) {
+          showMessage(
+            "Invalid code format. Example: BLU26-K7MPQX"
+          );
+          return;
+        }
+        // Prevent duplicate codes in this submission.
+        if (new Set(codes).size !== codes.length) {
+          showMessage(
+            "Duplicate codes found. Remove duplicates and try again."
+          );
+          return;
+        }
+        const confirmed = window.confirm(
+          "You are about to register " +
+          codes.length +
+          " tickets. Continue?"
         );
-        document.getElementById("codes").value = "";
-      } catch (error) {
-        showMessage(
-          "Could not complete registration. Check your connection and try again."
-        );
-      } finally {
-        button.disabled = false;
+        if (!confirmed) {
+          return;
+        }
+        registerButton.disabled = true;
+        try {
+          showMessage(
+            "Checking staff authorization and registering tickets..."
+          );
+          // Refresh the Firebase ID token.
+          const idToken = await user.getIdToken(true);
+          const response = await fetch(
+            "/.netlify/functions/register-tickets",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + idToken
+              },
+              body: JSON.stringify({
+                codes: codes
+              })
+            }
+          );
+          let data;
+          try {
+            data = await response.json();
+          } catch {
+            throw new Error(
+              "The server returned an invalid response."
+            );
+          }
+          if (!response.ok) {
+            let errorMessage =
+              data.message || "Registration failed.";
+            if (
+              Array.isArray(data.existingCodes) &&
+              data.existingCodes.length > 0
+            ) {
+              errorMessage +=
+                "\nExisting codes: " +
+                data.existingCodes.join(", ");
+            }
+            showMessage(errorMessage);
+            return;
+          }
+          showMessage(
+            "SUCCESS! " +
+            data.registered +
+            " tickets registered in Firebase."
+          );
+          codesInput.value = "";
+        } catch (error) {
+          console.error(
+            "Ticket registration request failed:",
+            error
+          );
+          showMessage(
+            "Registration could not be completed. " +
+            "Check the deployment and try again."
+          );
+        } finally {
+          registerButton.disabled = false;
+        }
       }
-    };
-    document.getElementById("logoutButton").onclick = async () => {
-      await auth.signOut();
-      showMessage("You have signed out.");
-    };
+    );
+    // SIGN OUT
+    document.getElementById("logoutButton")
+      .addEventListener("click", async function() {
+        try {
+          await auth.signOut();
+          codesInput.value = "";
+          passwordInput.value = "";
+          showMessage("You have signed out.");
+        } catch (error) {
+          showMessage("Unable to sign out. Try again.");
+        }
+      });
   </script>
 </body>
 </html>
