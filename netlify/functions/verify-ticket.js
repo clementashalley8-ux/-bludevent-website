@@ -16,7 +16,8 @@ function response(statusCode, message, valid = false, ticket = null) {
 }
 function initializeFirebase() {
   if (admin.apps.length) return;
-  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const serviceAccountJson =
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (!serviceAccountJson) {
     throw new Error("Firebase service account is not configured.");
   }
@@ -64,11 +65,9 @@ exports.handler = async (event) => {
       return response(400, "Please provide a valid ticket code.");
     }
     const db = admin.firestore();
-    // First, look for a ticket whose document ID matches the code.
     const directRef = db.collection("tickets").doc(ticketCode);
     let ticketRef = directRef;
     const ticketSnapshot = await directRef.get();
-    // If not found, search using the ticketCode field.
     if (!ticketSnapshot.exists) {
       const query = await db.collection("tickets")
         .where("ticketCode", "==", ticketCode)
@@ -79,7 +78,6 @@ exports.handler = async (event) => {
       }
       ticketRef = query.docs[0].ref;
     }
-    // Verify the ticket and mark it as used only once.
     const result = await db.runTransaction(async (transaction) => {
       const snapshot = await transaction.get(ticketRef);
       if (!snapshot.exists) {
@@ -105,37 +103,23 @@ exports.handler = async (event) => {
           message: "This ticket is invalid or cancelled."
         };
       }
-      // Mark the ticket as used.
       transaction.update(ticketRef, {
         used: true,
         status: "used",
         checkedInAt: admin.firestore.FieldValue.serverTimestamp(),
         checkedInBy: decodedToken.email
       });
-      // Return the ticket details to the website.
       return {
         valid: true,
         message: "Ticket verified. Check-in successful.",
         ticket: {
           ticketCode: ticket.ticketCode || ticketCode,
-          customerName:
-            ticket.customerName ||
-            ticket.fullName ||
-            ticket.name ||
-            "",
-          ticketType:
-            ticket.ticketType ||
-            ticket.category ||
-            "",
+          ticketType: ticket.ticketType || ticket.category || "",
+          price: ticket.Price ?? ticket.price ?? "",
           quantity: ticket.quantity ?? 1,
           status: "used",
-          paymentStatus: ticket.paymentStatus || "",
-          event:
-            ticket.event ||
-            "BluDevent Black in December 2026",
-          eventDate:
-            ticket.eventDate ||
-            "26 December 2026",
+          event: ticket.event || "BluDevent Black in December 2026",
+          eventDate: ticket.eventDate || "26 December 2026",
           checkedInBy: decodedToken.email
         }
       };
