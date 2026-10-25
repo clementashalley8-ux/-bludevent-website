@@ -8,9 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -28,7 +26,7 @@ h1 {
   font-size: 34px;
   margin: 8px 0;
 }
-h2 {
+h2, .ticket-details h3 {
   color: #e6bd55;
 }
 section {
@@ -96,7 +94,6 @@ label {
   line-height: 1.8;
 }
 .ticket-details h3 {
-  color: #e6bd55;
   margin-top: 0;
 }
 .detail-row {
@@ -104,12 +101,8 @@ label {
   border-bottom: 1px solid #333;
   overflow-wrap: anywhere;
 }
-.detail-label {
-  color: #ccc;
-}
-.detail-value {
-  font-weight: bold;
-}
+.detail-label { color: #ccc; }
+.detail-value { font-weight: bold; }
 .success {
   background: #14532d !important;
   border: 1px solid #22c55e;
@@ -117,10 +110,6 @@ label {
 .error {
   background: #7f1d1d !important;
   border: 1px solid #ef4444;
-}
-.warning {
-  background: #713f12 !important;
-  border: 1px solid #eab308;
 }
 footer {
   text-align: center;
@@ -131,12 +120,8 @@ footer {
   display: none !important;
 }
 @media (max-width: 680px) {
-  section {
-    margin: 16px 12px;
-  }
-  h1 {
-    font-size: 29px;
-  }
+  section { margin: 16px 12px; }
+  h1 { font-size: 29px; }
 }
 </style>
 </head>
@@ -160,27 +145,16 @@ footer {
   <h2>Book Your Ticket</h2>
   <form id="bookingForm">
     <label for="customerName">Full name</label>
-    <input
-      id="customerName"
-      type="text"
-      required
-      maxlength="100"
-      placeholder="Enter your full name"
-    >
+    <input id="customerName" type="text" required maxlength="100"
+      placeholder="Enter your full name">
     <label for="ticketType">Ticket category</label>
     <select id="ticketType">
       <option value="Guys - GH₵30">Guys - GH₵30</option>
       <option value="Ladies - GH₵20">Ladies - GH₵20</option>
     </select>
     <label for="ticketQuantity">Number of tickets</label>
-    <input
-      id="ticketQuantity"
-      type="number"
-      min="1"
-      max="10"
-      value="1"
-      required
-    >
+    <input id="ticketQuantity" type="number" min="1" max="10"
+      value="1" required>
     <button type="submit">Book via WhatsApp</button>
   </form>
   <p class="small">
@@ -188,73 +162,44 @@ footer {
     Your official ticket must be issued separately.
   </p>
 </section>
-<!-- STAFF LOGIN -->
 <section id="staffLoginSection">
   <h2>Staff Login</h2>
   <p>Authorized event staff only.</p>
   <form id="staffLoginForm">
     <label for="staffEmail">Staff email</label>
-    <input
-      id="staffEmail"
-      type="email"
-      required
-      autocomplete="username"
-      placeholder="Enter your staff email"
-    >
+    <input id="staffEmail" type="email" required autocomplete="username"
+      placeholder="Enter your staff email">
     <label for="staffPassword">Password</label>
-    <input
-      id="staffPassword"
-      type="password"
-      required
-      autocomplete="current-password"
-      placeholder="Enter your password"
-    >
+    <input id="staffPassword" type="password" required
+      autocomplete="current-password" placeholder="Enter your password">
     <button id="loginButton" type="submit">Log In</button>
   </form>
   <div id="loginMessage" role="status" aria-live="polite">
     Sign in with your authorized staff account.
   </div>
 </section>
-<!-- TICKET VERIFICATION -->
 <section id="verificationSection" class="hidden">
   <h2>Ticket Verification</h2>
-  <p>
-    Enter a ticket code or scan the QR code on a ticket.
-  </p>
+  <p>Enter a ticket code or scan the QR code on a ticket.</p>
   <label for="ticketCode">Ticket code</label>
-  <input
-    id="ticketCode"
-    type="text"
-    maxlength="100"
-    placeholder="Example: BLU26-K7MPQX"
-    autocomplete="off"
-  >
-  <button id="verifyButton" type="button">
-    Verify Ticket
-  </button>
-  <button id="scanButton" type="button">
-    Scan QR Code
-  </button>
-  <button id="stopButton" type="button" class="hidden">
-    Stop Scanner
-  </button>
+  <input id="ticketCode" type="text" maxlength="100"
+    placeholder="Example: BLU26-K7MPQX" autocomplete="off">
+  <button id="verifyButton" type="button">Verify Ticket</button>
+  <button id="scanButton" type="button">Scan QR Code</button>
+  <button id="stopButton" type="button" class="hidden">Stop Scanner</button>
   <div id="reader"></div>
   <div id="result" role="status" aria-live="polite">
     Ready to verify a ticket.
   </div>
-  <!-- TICKET DETAILS APPEAR HERE -->
   <div id="ticketDetails" class="ticket-details hidden">
     <h3>Ticket Details</h3>
     <div id="ticketDetailsContent"></div>
   </div>
-  <button id="logoutButton" type="button">
-    Log Out
-  </button>
+  <button id="logoutButton" type="button">Log Out</button>
   <p class="small">
-    Only authorized staff may verify tickets. The server must
-    independently authenticate the staff member, check staff
-    authorization, and validate the ticket against the official
-    ticket database.
+    Only authorized staff may verify tickets. The server must independently
+    authenticate staff, check authorization, and validate tickets against
+    the official ticket database.
   </p>
 </section>
 <footer>
@@ -263,7 +208,6 @@ footer {
 </footer>
 <script>
 "use strict";
-/* FIREBASE CONFIGURATION */
 const firebaseConfig = {
   apiKey: "AIzaSyCmPjjhOnzp7VXQD9tiH23Pw7ynLVTKx4Y",
   authDomain: "blud-event-tickets.firebaseapp.com",
@@ -276,25 +220,15 @@ const WHATSAPP_NUMBER = "233202603687";
 let scanner = null;
 let scanning = false;
 let checking = false;
-const loginSection =
-  document.getElementById("staffLoginSection");
-const verificationSection =
-  document.getElementById("verificationSection");
-const loginForm =
-  document.getElementById("staffLoginForm");
-const loginMessage =
-  document.getElementById("loginMessage");
-const loginButton =
-  document.getElementById("loginButton");
-const verifyButton =
-  document.getElementById("verifyButton");
-const result =
-  document.getElementById("result");
-const ticketDetails =
-  document.getElementById("ticketDetails");
-const ticketDetailsContent =
-  document.getElementById("ticketDetailsContent");
-/* INITIALIZE FIREBASE */
+const loginSection = document.getElementById("staffLoginSection");
+const verificationSection = document.getElementById("verificationSection");
+const loginForm = document.getElementById("staffLoginForm");
+const loginMessage = document.getElementById("loginMessage");
+const loginButton = document.getElementById("loginButton");
+const verifyButton = document.getElementById("verifyButton");
+const result = document.getElementById("result");
+const ticketDetails = document.getElementById("ticketDetails");
+const ticketDetailsContent = document.getElementById("ticketDetailsContent");
 try {
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
@@ -309,18 +243,25 @@ try {
   loginMessage.textContent =
     "Firebase could not initialize. Check your web configuration.";
 }
-/* DISPLAY TICKET DETAILS SAFELY */
+/* DISPLAY TICKET DETAILS */
 function displayTicketDetails(ticket) {
   ticketDetailsContent.replaceChildren();
   const fields = [
     ["Ticket Code", ticket.ticketCode || ticket.code],
     ["Ticket Holder", ticket.customerName || ticket.fullName || ticket.name],
     ["Ticket Category", ticket.ticketType || ticket.category],
+    ["Ticket Price",
+      ticket.price !== undefined && ticket.price !== ""
+        ? "GH₵" + ticket.price
+        : ticket.Price !== undefined && ticket.Price !== ""
+          ? "GH₵" + ticket.Price
+          : ""],
     ["Quantity", ticket.quantity],
-    ["Ticket Status", ticket.status],
+    ["Ticket Status", ticket.status || (ticket.used ? "used" : "valid")],
     ["Payment Status", ticket.paymentStatus],
-    ["Event", ticket.event],
-    ["Event Date", ticket.eventDate]
+    ["Event", ticket.event || "BluDevent Black in December 2026"],
+    ["Event Date", ticket.eventDate || "26 December 2026"],
+    ["Checked In By", ticket.checkedInBy]
   ];
   let foundDetails = 0;
   fields.forEach(function(field) {
@@ -343,63 +284,43 @@ function displayTicketDetails(ticket) {
   });
   if (foundDetails === 0) {
     const message = document.createElement("p");
-    message.textContent =
-      "The server verified the response but returned no recognizable ticket details.";
+    message.textContent = "No ticket details were returned by the server.";
     ticketDetailsContent.appendChild(message);
   }
   ticketDetails.classList.remove("hidden");
 }
 /* WHATSAPP BOOKING */
-document.getElementById("bookingForm").addEventListener(
-  "submit",
-  function(event) {
-    event.preventDefault();
-    const name =
-      document.getElementById("customerName").value.trim();
-    const type =
-      document.getElementById("ticketType").value;
-    const quantity =
-      Number(document.getElementById("ticketQuantity").value);
-    if (
-      !name ||
-      !Number.isInteger(quantity) ||
-      quantity < 1 ||
-      quantity > 10
-    ) {
-      alert("Please enter a valid name and ticket quantity.");
-      return;
-    }
-    const price = type.includes("Guys") ? 30 : 20;
-    const total = price * quantity;
-    const message =
-      "Hello BluDevent, I want to request a ticket booking.\n" +
-      "Name: " + name + "\n" +
-      "Ticket: " + type + "\n" +
-      "Quantity: " + quantity + "\n" +
-      "Total: GH₵" + total + "\n" +
-      "Event: Black in December 2026";
-    const url =
-      "https://wa.me/" +
-      WHATSAPP_NUMBER +
-      "?text=" +
-      encodeURIComponent(message);
-    window.open(url, "_blank");
+document.getElementById("bookingForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+  const name = document.getElementById("customerName").value.trim();
+  const type = document.getElementById("ticketType").value;
+  const quantity = Number(document.getElementById("ticketQuantity").value);
+  if (!name || !Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
+    alert("Please enter a valid name and ticket quantity.");
+    return;
   }
-);
+  const price = type.includes("Guys") ? 30 : 20;
+  const total = price * quantity;
+  const message =
+    "Hello BluDevent, I want to request a ticket booking.\n" +
+    "Name: " + name + "\n" +
+    "Ticket: " + type + "\n" +
+    "Quantity: " + quantity + "\n" +
+    "Total: GH₵" + total + "\n" +
+    "Event: Black in December 2026";
+  const url = "https://wa.me/" + WHATSAPP_NUMBER +
+    "?text=" + encodeURIComponent(message);
+  window.open(url, "_blank");
+});
 /* STAFF LOGIN */
 loginForm.addEventListener("submit", async function(event) {
   event.preventDefault();
-  const email =
-    document.getElementById("staffEmail").value.trim();
-  const password =
-    document.getElementById("staffPassword").value;
+  const email = document.getElementById("staffEmail").value.trim();
+  const password = document.getElementById("staffPassword").value;
   loginButton.disabled = true;
   loginMessage.textContent = "Signing in...";
   try {
-    await firebase.auth().signInWithEmailAndPassword(
-      email,
-      password
-    );
+    await firebase.auth().signInWithEmailAndPassword(email, password);
     loginMessage.textContent = "Login successful.";
   } catch (error) {
     loginMessage.textContent =
@@ -409,13 +330,12 @@ loginForm.addEventListener("submit", async function(event) {
     loginButton.disabled = false;
   }
 });
-/* SHOW VERIFICATION AFTER FIREBASE SIGN-IN */
+/* SHOW VERIFICATION AFTER SIGN-IN */
 firebase.auth().onAuthStateChanged(function(user) {
   if (user) {
     loginSection.classList.add("hidden");
     verificationSection.classList.remove("hidden");
     result.className = "";
-    result.id = "result";
     result.textContent =
       "Signed in. Enter a ticket code or scan a QR code.";
   } else {
@@ -430,16 +350,13 @@ verifyButton.addEventListener("click", verifyTicket);
 async function verifyTicket() {
   if (checking) return;
   const user = firebase.auth().currentUser;
-  const code =
-    document.getElementById("ticketCode").value.trim();
+  const code = document.getElementById("ticketCode").value.trim();
   if (!user) {
-    result.textContent =
-      "Please sign in before verifying tickets.";
+    result.textContent = "Please sign in before verifying tickets.";
     return;
   }
   if (!code) {
-    result.textContent =
-      "Please enter or scan a ticket code.";
+    result.textContent = "Please enter or scan a ticket code.";
     return;
   }
   checking = true;
@@ -447,53 +364,38 @@ async function verifyTicket() {
   ticketDetails.classList.add("hidden");
   ticketDetailsContent.replaceChildren();
   result.className = "";
-  result.id = "result";
   result.textContent = "Checking ticket...";
   try {
     const idToken = await user.getIdToken();
-    const response = await fetch(
-      "/.netlify/functions/verify-ticket",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + idToken
-        },
-        body: JSON.stringify({
-          ticketCode: code
-        })
-      }
-    );
+    const response = await fetch("/.netlify/functions/verify-ticket", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + idToken
+      },
+      body: JSON.stringify({ ticketCode: code })
+    });
     let data;
     try {
       data = await response.json();
     } catch (error) {
-      throw new Error(
-        "The verification service returned an invalid response."
-      );
+      throw new Error("The verification service returned an invalid response.");
     }
     if (!response.ok) {
-      result.textContent =
-        data.message || "Ticket verification failed.";
+      result.textContent = data.message || "Ticket verification failed.";
       result.classList.add("error");
       return;
     }
     if (data.valid === true) {
-      result.textContent =
-        "Ticket verified successfully.";
+      result.textContent = data.message || "Ticket verified successfully.";
       result.classList.add("success");
-      /*
-       The backend may return ticket fields directly,
-       or inside a "ticket" object.
-      */
       const ticket =
         data.ticket && typeof data.ticket === "object"
           ? data.ticket
           : data;
       displayTicketDetails(ticket);
     } else {
-      result.textContent =
-        data.message || "Invalid or unrecognized ticket.";
+      result.textContent = data.message || "Invalid or unrecognized ticket.";
       result.classList.add("error");
     }
   } catch (error) {
@@ -507,24 +409,16 @@ async function verifyTicket() {
   }
 }
 /* QR CODE SCANNER */
-document.getElementById("scanButton").addEventListener(
-  "click",
-  startScanner
-);
-document.getElementById("stopButton").addEventListener(
-  "click",
-  stopScanner
-);
+document.getElementById("scanButton").addEventListener("click", startScanner);
+document.getElementById("stopButton").addEventListener("click", stopScanner);
 async function startScanner() {
   if (scanning) return;
   if (!firebase.auth().currentUser) {
-    result.textContent =
-      "Please sign in before scanning tickets.";
+    result.textContent = "Please sign in before scanning tickets.";
     return;
   }
   if (typeof Html5Qrcode === "undefined") {
-    result.textContent =
-      "QR scanner library did not load. Check your internet connection.";
+    result.textContent = "QR scanner library did not load. Check your internet connection.";
     result.classList.add("error");
     return;
   }
@@ -533,32 +427,24 @@ async function startScanner() {
     result.textContent = "Opening camera...";
     await scanner.start(
       { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: { width: 230, height: 230 }
-      },
+      { fps: 10, qrbox: { width: 230, height: 230 } },
       async function(decodedText) {
-        document.getElementById("ticketCode").value =
-          decodedText.trim();
+        document.getElementById("ticketCode").value = decodedText.trim();
         await stopScanner();
         await verifyTicket();
       },
       function() {}
     );
     scanning = true;
-    document.getElementById("scanButton")
-      .classList.add("hidden");
-    document.getElementById("stopButton")
-      .classList.remove("hidden");
-    result.textContent =
-      "Camera ready. Point it at the ticket QR code.";
+    document.getElementById("scanButton").classList.add("hidden");
+    document.getElementById("stopButton").classList.remove("hidden");
+    result.textContent = "Camera ready. Point it at the ticket QR code.";
     result.className = "";
   } catch (error) {
     scanner = null;
     scanning = false;
     result.textContent =
-      "Camera could not start. Allow camera access and open " +
-      "the website using HTTPS.";
+      "Camera could not start. Allow camera access and open the website using HTTPS.";
     result.classList.add("error");
   }
 }
@@ -568,35 +454,29 @@ async function stopScanner() {
       await scanner.stop();
       await scanner.clear();
     } catch (error) {
-      // Reset the scanner controls even if stopping fails.
+      // Reset scanner controls even if stopping fails.
     }
   }
   scanner = null;
   scanning = false;
-  document.getElementById("scanButton")
-    .classList.remove("hidden");
-  document.getElementById("stopButton")
-    .classList.add("hidden");
+  document.getElementById("scanButton").classList.remove("hidden");
+  document.getElementById("stopButton").classList.add("hidden");
 }
 /* LOG OUT */
-document.getElementById("logoutButton").addEventListener(
-  "click",
-  async function() {
-    await stopScanner();
-    try {
-      await firebase.auth().signOut();
-      loginMessage.textContent = "You have logged out.";
-      document.getElementById("staffPassword").value = "";
-      document.getElementById("ticketCode").value = "";
-      ticketDetails.classList.add("hidden");
-      ticketDetailsContent.replaceChildren();
-    } catch (error) {
-      result.textContent =
-        "Unable to log out. Please try again.";
-      result.classList.add("error");
-    }
+document.getElementById("logoutButton").addEventListener("click", async function() {
+  await stopScanner();
+  try {
+    await firebase.auth().signOut();
+    loginMessage.textContent = "You have logged out.";
+    document.getElementById("staffPassword").value = "";
+    document.getElementById("ticketCode").value = "";
+    ticketDetails.classList.add("hidden");
+    ticketDetailsContent.replaceChildren();
+  } catch (error) {
+    result.textContent = "Unable to log out. Please try again.";
+    result.classList.add("error");
   }
-);
+});
 </script>
 </body>
 </html>
